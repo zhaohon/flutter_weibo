@@ -1,24 +1,22 @@
 # weibo_kit
 
-[![Build Status](https://cloud.drone.io/api/badges/v7lin/weibo_kit/status.svg)](https://cloud.drone.io/v7lin/weibo_kit)
-[![Codecov](https://codecov.io/gh/v7lin/weibo_kit/branch/master/graph/badge.svg)](https://codecov.io/gh/v7lin/weibo_kit)
-[![GitHub Tag](https://img.shields.io/github/tag/v7lin/weibo_kit.svg)](https://github.com/v7lin/weibo_kit/releases)
+[![GitHub Tag](https://img.shields.io/github/tag/rxreader/weibo_kit.svg)](https://github.com/rxreader/weibo_kit/releases)
 [![Pub Package](https://img.shields.io/pub/v/weibo_kit.svg)](https://pub.dartlang.org/packages/weibo_kit)
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/v7lin/weibo_kit/blob/master/LICENSE)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/rxreader/weibo_kit/blob/master/LICENSE)
 
 flutter版新浪微博SDK
 
 ## fake 系列 libraries
 
-* [flutter版微信SDK](https://github.com/v7lin/wechat_kit)
-* [flutter版腾讯(QQ)SDK](https://github.com/v7lin/tencent_kit)
-* [flutter版新浪微博SDK](https://github.com/v7lin/weibo_kit)
-* [flutter版支付宝SDK](https://github.com/v7lin/alipay_kit)
-* [flutter版walle渠道打包工具](https://github.com/v7lin/walle_kit)
+* [flutter版微信SDK](https://github.com/rxreader/wechat_kit)
+* [flutter版腾讯(QQ)SDK](https://github.com/rxreader/tencent_kit)
+* [flutter版新浪微博SDK](https://github.com/rxreader/weibo_kit)
+* [flutter版支付宝SDK](https://github.com/rxreader/alipay_kit)
+* [flutter版walle渠道打包工具](https://github.com/rxreader/walle_kit)
 
 ## dart/flutter 私服
 
-* [simple_pub_server](https://github.com/v7lin/simple_pub_server)
+* [simple_pub_server](https://github.com/rxreader/simple_pub_server)
 
 ## docs
 
@@ -26,8 +24,18 @@ flutter版新浪微博SDK
 * [iOS 应用接入](https://open.weibo.com/wiki/Sdk/ios)
 * [Android Github](https://github.com/sinaweibosdk/weibo_android_sdk)
 * [iOS Github](https://github.com/sinaweibosdk/weibo_ios_sdk)
+* [Universal Links](https://developer.apple.com/documentation/uikit/inter-process_communication/allowing_apps_and_websites_to_link_to_your_content)
 
 ## android
+
+```groovy
+buildscript {
+    dependencies {
+        // 3.5.4/3.6.4/4.x.x
+        classpath 'com.android.tools.build:gradle:3.5.4'
+    }
+}
+```
 
 ```
 # 不需要做任何额外接入工作
@@ -75,83 +83,15 @@ iOS 9系统策略更新，限制了http协议的访问，此外应用需要在�
     <string>sinaweibohd</string>
     <string>weibosdk</string>
     <string>weibosdk2.5</string>
+    <string>weibosdk3.3</string>
 </array>
-<key>NSAppTransportSecurity</key>
-<dict>
-    <key>NSAllowsArbitraryLoads</key>
-    <true/>
-    <key>NSExceptionDomains</key>
-    <dict>
-        <key>sina.cn</key>
-        <dict>
-            <key>NSIncludesSubdomains</key>
-            <true/>
-            <key>NSThirdPartyExceptionAllowsInsecureHTTPLoads</key>
-            <true/>
-            <key>NSExceptionMinimumTLSVersion</key>
-            <string>TLSv1.0</string>
-            <key>NSThirdPartyExceptionRequiresForwardSecrecy</key>
-            <false/>
-        </dict>
-        <key>weibo.cn</key>
-        <dict>
-            <key>NSIncludesSubdomains</key>
-            <true/>
-            <key>NSThirdPartyExceptionAllowsInsecureHTTPLoads</key>
-            <true/>
-            <key>NSExceptionMinimumTLSVersion</key>
-            <string>TLSv1.0</string>
-            <key>NSThirdPartyExceptionRequiresForwardSecrecy</key>
-            <false/>
-        </dict>
-        <key>weibo.com</key>
-        <dict>
-            <key>NSIncludesSubdomains</key>
-            <true/>
-            <key>NSThirdPartyExceptionAllowsInsecureHTTPLoads</key>
-            <true/>
-            <key>NSExceptionMinimumTLSVersion</key>
-            <string>TLSv1.0</string>
-            <key>NSThirdPartyExceptionRequiresForwardSecrecy</key>
-            <false/>
-        </dict>
-        <key>sinaimg.cn</key>
-        <dict>
-            <key>NSIncludesSubdomains</key>
-            <true/>
-            <key>NSExceptionMinimumTLSVersion</key>
-            <string>TLSv1.0</string>
-            <key>NSThirdPartyExceptionAllowsInsecureHTTPLoads</key>
-            <true/>
-            <key>NSThirdPartyExceptionRequiresForwardSecrecy</key>
-            <false/>
-        </dict>
-        <key>sinajs.cn</key>
-        <dict>
-            <key>NSIncludesSubdomains</key>
-            <true/>
-            <key>NSThirdPartyExceptionAllowsInsecureHTTPLoads</key>
-            <true/>
-            <key>NSExceptionMinimumTLSVersion</key>
-            <string>TLSv1.0</string>
-            <key>NSThirdPartyExceptionRequiresForwardSecrecy</key>
-            <false/>
-        </dict>
-        <key>sina.com.cn</key>
-        <dict>
-            <key>NSIncludesSubdomains</key>
-            <true/>
-            <key>NSThirdPartyExceptionAllowsInsecureHTTPLoads</key>
-            <true/>
-            <key>NSExceptionMinimumTLSVersion</key>
-            <string>TLSv1.0</string>
-            <key>NSThirdPartyExceptionRequiresForwardSecrecy</key>
-            <false/>
-        </dict>
-    </dict>
-</dict>
 ```
 ## flutter
+
+* break change
+    * 3.0.0: 重构
+    * 2.0.2: iOS Universal Links
+    * 2.0.0: nullsafety & 不再支持 Android embedding v1 & Weibo 单例
 
 * snapshot
 
@@ -159,7 +99,7 @@ iOS 9系统策略更新，限制了http协议的访问，此外应用需要在�
 dependencies:
   weibo_kit:
     git:
-      url: https://github.com/v7lin/weibo_kit.git
+      url: https://github.com/rxreader/weibo_kit.git
 ```
 
 * release
@@ -173,13 +113,6 @@ dependencies:
 
 [示例](./example/lib/main.dart)
 
-## Getting Started
+## Star History
 
-This project is a starting point for a Flutter
-[plug-in package](https://flutter.dev/developing-packages/),
-a specialized package that includes platform-specific implementation code for
-Android and/or iOS.
-
-For help getting started with Flutter, view our 
-[online documentation](https://flutter.dev/docs), which offers tutorials, 
-samples, guidance on mobile development, and a full API reference.
+![stars](https://starchart.cc/rxreader/weibo_kit.svg)

@@ -1,18 +1,17 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
-import 'package:weibo_kit/src/model/api/weibo_user_info_resp.dart';
-import 'package:weibo_kit/src/model/sdk/weibo_auth_resp.dart';
-import 'package:weibo_kit/src/model/sdk/weibo_sdk_resp.dart';
+import 'package:weibo_kit/src/model/resp.dart';
 
 class Weibo {
-  Weibo() {
-    _channel.setMethodCallHandler(_handleMethod);
-  }
+  ///
+  Weibo._();
+
+  static Weibo get instance => _instance;
+
+  static final Weibo _instance = Weibo._();
 
   static const String _METHOD_REGISTERAPP = 'registerApp';
   static const String _METHOD_ISINSTALLED = 'isInstalled';
@@ -25,6 +24,7 @@ class Weibo {
   static const String _METHOD_ONSHAREMSGRESP = 'onShareMsgResp';
 
   static const String _ARGUMENT_KEY_APPKEY = 'appKey';
+  static const String _ARGUMENT_KEY_UNIVERSALLINK = 'universalLink';
   static const String _ARGUMENT_KEY_SCOPE = 'scope';
   static const String _ARGUMENT_KEY_REDIRECTURL = 'redirectUrl';
   static const String _ARGUMENT_KEY_TEXT = 'text';
@@ -40,27 +40,26 @@ class Weibo {
   static const String _DEFAULT_REDIRECTURL =
       'https://api.weibo.com/oauth2/default.html';
 
-  final MethodChannel _channel =
-      const MethodChannel('v7lin.github.io/weibo_kit');
+  late final MethodChannel _channel =
+      const MethodChannel('v7lin.github.io/weibo_kit')
+        ..setMethodCallHandler(_handleMethod);
 
-  final StreamController<WeiboAuthResp> _authRespStreamController =
-      StreamController<WeiboAuthResp>.broadcast();
-
-  final StreamController<WeiboSdkResp> _shareMsgRespStreamController =
-      StreamController<WeiboSdkResp>.broadcast();
+  final StreamController<BaseResp> _respStreamController =
+      StreamController<BaseResp>.broadcast();
 
   Future<void> registerApp({
-    @required String appKey,
-    @required List<String> scope,
+    required String appKey,
+    required String? universalLink,
+    required List<String> scope,
     String redirectUrl =
         _DEFAULT_REDIRECTURL, // 新浪微博开放平台 -> 我的应用 -> 应用信息 -> 高级信息 -> OAuth2.0授权设置
   }) {
-    assert(appKey != null && appKey.isNotEmpty);
-    assert(scope != null && scope.isNotEmpty);
+    assert(!Platform.isIOS || (universalLink?.isNotEmpty ?? false));
     return _channel.invokeMethod<void>(
       _METHOD_REGISTERAPP,
       <String, dynamic>{
         _ARGUMENT_KEY_APPKEY: appKey,
+        _ARGUMENT_KEY_UNIVERSALLINK: universalLink,
         _ARGUMENT_KEY_SCOPE: scope.join(','),
         _ARGUMENT_KEY_REDIRECTURL: redirectUrl,
       },
@@ -70,38 +69,31 @@ class Weibo {
   Future<dynamic> _handleMethod(MethodCall call) async {
     switch (call.method) {
       case _METHOD_ONAUTHRESP:
-        _authRespStreamController.add(
-            WeiboAuthResp.fromJson(call.arguments as Map<dynamic, dynamic>));
+        _respStreamController.add(AuthResp.fromJson(
+            (call.arguments as Map<dynamic, dynamic>).cast<String, dynamic>()));
         break;
       case _METHOD_ONSHAREMSGRESP:
-        _shareMsgRespStreamController.add(
-            WeiboSdkResp.fromJson(call.arguments as Map<dynamic, dynamic>));
+        _respStreamController.add(ShareMsgResp.fromJson(
+            (call.arguments as Map<dynamic, dynamic>).cast<String, dynamic>()));
         break;
     }
   }
 
-  /// 登录
-  Stream<WeiboAuthResp> authResp() {
-    return _authRespStreamController.stream;
+  ///
+  Stream<BaseResp> respStream() {
+    return _respStreamController.stream;
   }
 
-  /// 分享
-  Stream<WeiboSdkResp> shareMsgResp() {
-    return _shareMsgRespStreamController.stream;
-  }
-
-  Future<bool> isInstalled() {
-    return _channel.invokeMethod<bool>(_METHOD_ISINSTALLED);
+  Future<bool> isInstalled() async {
+    return await _channel.invokeMethod<bool>(_METHOD_ISINSTALLED) ?? false;
   }
 
   /// 登录
   Future<void> auth({
-    @required String appKey,
-    @required List<String> scope,
+    required String appKey,
+    required List<String> scope,
     String redirectUrl = _DEFAULT_REDIRECTURL,
   }) {
-    assert(appKey != null && appKey.isNotEmpty);
-    assert(scope != null && scope.isNotEmpty);
     return _channel.invokeMethod<void>(
       _METHOD_AUTH,
       <String, dynamic>{
@@ -112,56 +104,10 @@ class Weibo {
     );
   }
 
-  /// 用户信息
-  Future<WeiboUserInfoResp> getUserInfo({
-    @required String appkey,
-    @required String userId,
-    @required String accessToken,
-  }) {
-    assert(userId != null && userId.isNotEmpty);
-    assert(accessToken != null && accessToken.isNotEmpty);
-    Map<String, String> params = <String, String>{
-      'uid': userId,
-    };
-    return HttpClient()
-        .getUrl(_encodeUrl('https://api.weibo.com/2/users/show.json', appkey,
-            accessToken, params))
-        .then((HttpClientRequest request) {
-      return request.close();
-    }).then((HttpClientResponse response) async {
-      if (response.statusCode == HttpStatus.ok) {
-        String content = await utf8.decodeStream(response);
-        return WeiboUserInfoResp.fromJson(
-            json.decode(content) as Map<dynamic, dynamic>);
-      }
-      throw HttpException(
-          'HttpResponse statusCode: ${response.statusCode}, reasonPhrase: ${response.reasonPhrase}.');
-    });
-  }
-
-  Uri _encodeUrl(
-    String baseUrl,
-    String appkey,
-    String accessToken,
-    Map<String, String> params,
-  ) {
-    params['source'] = appkey;
-    params['access_token'] = accessToken;
-    Uri baseUri = Uri.parse(baseUrl);
-    Map<String, List<String>> queryParametersAll =
-        Map<String, List<String>>.of(baseUri.queryParametersAll);
-    for (MapEntry<String, String> entry in params.entries) {
-      queryParametersAll.remove(entry.key);
-      queryParametersAll.putIfAbsent(entry.key, () => <String>[entry.value]);
-    }
-    return baseUri.replace(queryParameters: queryParametersAll);
-  }
-
   /// 分享 - 文本
   Future<void> shareText({
-    @required String text,
+    required String text,
   }) {
-    assert(text != null && text.length <= 1024);
     return _channel.invokeMethod<void>(
       _METHOD_SHARETEXT,
       <String, dynamic>{
@@ -172,9 +118,9 @@ class Weibo {
 
   /// 分享 - 图片
   Future<void> shareImage({
-    String text,
-    Uint8List imageData,
-    Uri imageUri,
+    String? text,
+    Uint8List? imageData,
+    Uri? imageUri,
   }) {
     assert(text == null || text.length <= 1024);
     assert((imageData != null && imageData.lengthInBytes <= 2 * 1024 * 1024) ||
@@ -193,20 +139,17 @@ class Weibo {
   }
 
   /// 分享 - 网页
+  @Deprecated('iOS：分享多媒体已经弃用 请不要用相关api')
   Future<void> shareWebpage({
-    @required String title,
-    @required String description,
-    @required Uint8List thumbData,
-    @required String webpageUrl,
+    required String title,
+    required String description,
+    required Uint8List thumbData,
+    required String webpageUrl,
   }) {
-    assert(title != null && title.isNotEmpty && title.length <= 512);
-    assert(description != null &&
-        description.isNotEmpty &&
-        description.length <= 1024);
-    assert(thumbData != null && thumbData.lengthInBytes <= 32 * 1024);
-    assert(webpageUrl != null &&
-        webpageUrl.isNotEmpty &&
-        webpageUrl.length <= 255);
+    assert(title.length <= 512);
+    assert(description.isNotEmpty && description.length <= 1024);
+    assert(thumbData.lengthInBytes <= 32 * 1024);
+    assert(webpageUrl.length <= 255);
     return _channel.invokeMethod<void>(
       _METHOD_SHAREWEBPAGE,
       <String, dynamic>{
